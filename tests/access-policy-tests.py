@@ -36,14 +36,10 @@ class AccessPolicyFunctionalTests(unittest.TestCase):
             assigned_role,
             test_user_repo)
 
+        # Expected TRUE authorizations for "owner" permissions.
         self.assertTrue(oso_client.authorize(
             test_user,
             policydefinitions.PermissionTypes.LIST_DIRECTORY,
-            test_user_repo))
-
-        self.assertTrue(oso_client.authorize(
-            test_user,
-            policydefinitions.PermissionTypes.CREATE_DIRECTORY,
             test_user_repo))
 
         self.assertTrue(oso_client.authorize(
@@ -53,9 +49,50 @@ class AccessPolicyFunctionalTests(unittest.TestCase):
 
         self.assertTrue(oso_client.authorize(
             test_user,
+            policydefinitions.PermissionTypes.CREATE_DIRECTORY,
+            test_user_repo))
+
+        self.assertTrue(oso_client.authorize(
+            test_user,
             policydefinitions.PermissionTypes.UPLOAD_FILE,
             test_user_repo))
-        
+
+        return None
+
+    def test_role_guest(self):
+        oso_client = _oso_client_util.get_client()
+        # Create an actor and resource with an assigned role.
+        test_user = User("user@test-role-guest")
+        test_user_repo = Repository("test-role-guest")
+        assigned_role = policydefinitions.RoleTypes.GUEST
+        oso_client.tell(
+            "has_role",
+            test_user,
+            assigned_role,
+            test_user_repo)
+
+        # Expected TRUE authorizations for "guest" permissions.
+        self.assertTrue(oso_client.authorize(
+            test_user,
+            policydefinitions.PermissionTypes.LIST_DIRECTORY,
+            test_user_repo))
+
+        self.assertTrue(oso_client.authorize(
+            test_user,
+            policydefinitions.PermissionTypes.DOWNLOAD_FILE,
+            test_user_repo))
+
+        # Expected FALSE authorizations for "guest" permissions.
+        self.assertFalse(oso_client.authorize(
+            test_user,
+            policydefinitions.PermissionTypes.CREATE_DIRECTORY,
+            test_user_repo))
+
+        self.assertFalse(oso_client.authorize(
+            test_user,
+            policydefinitions.PermissionTypes.UPLOAD_FILE,
+            test_user_repo))
+
         return None
 
 if __name__ == "__main__":

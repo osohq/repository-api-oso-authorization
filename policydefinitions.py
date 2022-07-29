@@ -16,6 +16,7 @@ class Repository:
 class RoleTypes:
     OWNER = "owner"
     ADMIN = "admin"
+    GUEST = "guest"
 
 class PermissionTypes:
     LIST_DIRECTORY = "list_directory"
