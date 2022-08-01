@@ -13,12 +13,12 @@ class Group:
 class Repository:
     id: str
 
-class RoleTypes:
+class RepositoryRoles:
     OWNER = "owner"
     ADMIN = "admin"
     GUEST = "guest"
 
-class PermissionTypes:
+class RepositoryPermissions:
     LIST_DIRECTORY = "list_directory"
     CREATE_DIRECTORY = "create_directory"
     DOWNLOAD_FILE = "download_file"

@@ -5,17 +5,15 @@ import sys
 import time
 import unittest
 
-# Modules defined within this project.
 # Make sure to call all the tests from the parent directory.
 sys.path.append(os.getcwd())
-import commonutils
 import repohostutils
 
 from repohostutils import ApiRoutes
 from repohostutils import ApiParameterKeys
 from repohostutils import HttpResponseCode
 
-MODULE_NAME = "repo-access-tests"
+
 _TMP_DIR = ".tmp"
 
 class _HelperFunctions:
@@ -23,7 +21,7 @@ class _HelperFunctions:
     def create_repo(username, repo_name):
         # Create the API Request URL
         api_request_url = repohostutils.localhost_api_endpoint(ApiRoutes.CREATE_REPO)
-        
+
         # Form the HTTP request.
         http_headers = {
             'Content-Type': "application/json",
@@ -42,7 +40,7 @@ class _HelperFunctions:
     def create_directory(username, repo_name, directory_path):
         # Create the API Request URL
         api_request_url = repohostutils.localhost_api_endpoint(ApiRoutes.CREATE_DIRECTORY)
-        
+
         # Form the HTTP request.
         http_headers = {
             'Content-Type': "application/json",
@@ -63,7 +61,7 @@ class _HelperFunctions:
 class RepoAccessFunctionalTests(unittest.TestCase):
     def setUp(self):
         log_message = "Performing Test ::{}".format(self._testMethodName)
-        commonutils.log_info(MODULE_NAME, log_message)
+        print("INFO: apitests", log_message)
 
     def test_create_repo(self):
         username = "user@test-create-repo"
@@ -126,7 +124,7 @@ class RepoAccessFunctionalTests(unittest.TestCase):
 
         # Create the API Request URL
         api_request_url = repohostutils.localhost_api_endpoint(ApiRoutes.LIST_DIRECTORIES)
-        
+
         # Form the HTTP request.
         http_headers = {
             'Content-Type': "application/json",
@@ -272,11 +270,12 @@ class RepoAccessFunctionalTests(unittest.TestCase):
 
 if __name__ == "__main__":
     try:
-        # Configure the unit test
+        #######################################################################
+        # Configure the test environment
         if not os.path.exists(_TMP_DIR):
             os.mkdir(_TMP_DIR)
 
-        # Run the module's unit test.
+        # Run the tests.
         unittest.main()
 
     except SystemExit as error:

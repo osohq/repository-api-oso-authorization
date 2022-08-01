@@ -5,8 +5,6 @@ import sys
 
 from flask import jsonify
 
-# Modules defined within this project.
-import commonutils
 
 # HTTP Utils
 class HttpResponseCode:
@@ -15,7 +13,7 @@ class HttpResponseCode:
     SUCCESSFUL_RESPONSE_204_NO_CONTENT = 204
 
     CLIENT_ERROR_RESPONSE_400_BAD_REQUEST = 400
-    CLIENT_ERROR_RESPONSE_401_UNATHORIZED = 401
+    CLIENT_ERROR_RESPONSE_401_UNAUTHORIZED = 401
     CLIENT_ERROR_RESPONSE_403_FORBIDDEN = 403
     CLIENT_ERROR_RESPONSE_404_NOT_FOUND = 404
     CLIENT_ERROR_RESPONSE_405_METHOD_NOT_ALLOWED = 405
@@ -31,7 +29,7 @@ class ApiRoutes:
     LIST_DIRECTORIES = "/list-directories"
     DOWNLOAD_FILE = "/download-file"
     UPLOAD_FILE = "/upload-file"
-    
+
 class ApiParameterKeys:
     USERNAME = "username"
     REPO_NAME = "repo_name"
@@ -55,6 +53,7 @@ class ParameterValidation:
 
 DEFAULT_HTTP_HOST_NAME = "localhost"
 DEFAULT_HTTP_PORT_NUMBER = "5000"
+
 def localhost_api_endpoint(api_requst):
     endpoint_url = None
     if isinstance(api_requst, str):
@@ -83,7 +82,7 @@ def _create_directory(path):
                 os.mkdir(current_path)
 
     return None
-    
+
 def _create_file(file_path):
     file_name = None
     folders_in_path = file_path.split("/")
@@ -125,7 +124,7 @@ def get_file_name_from_path(file_path):
         file_name = file_path.split("/")[-1]
 
     return file_name
-        
+
 def get_path_json(path):
     return jsonify({
         "path": path
@@ -136,7 +135,7 @@ def repo_host_init():
     _create_directory(root_directory)
 
     return None
-    
+
 def create_user_repo(username, repo_name):
     user_repo_directory = _get_user_repo_path(username, repo_name)
     _create_directory(user_repo_directory)
@@ -147,9 +146,9 @@ def create_user_repo_directory(username, repo_name, directory_path):
         username,
         repo_name,
         directory_path)
-    
+
     _create_directory(full_directory_path)
-   
+
     return "{}/{}".format(repo_name, directory_path)
 
 def create_user_repo_file(username, repo_name, file_path):
@@ -171,7 +170,7 @@ def list_directories(username, repo_name, directory_path):
     subdirectories = None
     if os.path.exists(full_directory_path):
         subdirectories = [obj.path for obj in os.scandir(full_directory_path) if obj.is_dir()]
-    
+
     return subdirectories
 
 def write_file(username,
