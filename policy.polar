@@ -23,7 +23,6 @@ resource Repository {
     "download_file" if "admin";
     "upload_file" if "admin";
 
-    "guest" if "admin";
     "admin" if "owner";
 }
 
