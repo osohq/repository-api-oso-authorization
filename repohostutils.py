@@ -23,13 +23,6 @@ class HttpResponseCode:
     SERVER_ERROR_RESPONSE_500_INTERNAL_SERVER_ERROR = 500
     SERVER_ERROR_RESPONSE_503_SERVICE_UNAVAILABLE = 503
 
-class ApiRoutes:
-    CREATE_REPO = "/create-repo"
-    CREATE_DIRECTORY = "/create-directory"
-    LIST_DIRECTORIES = "/list-directories"
-    DOWNLOAD_FILE = "/download-file"
-    UPLOAD_FILE = "/upload-file"
-
 class ApiParameterKeys:
     USERNAME = "username"
     REPO_NAME = "repo_name"

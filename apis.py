@@ -12,7 +12,6 @@ from flask import send_file
 import repohostutils
 
 from policydefinitions import RepositoryPermissions, RepositoryRoles, User, Repository
-from repohostutils import ApiRoutes
 from repohostutils import ApiParameterKeys, ApiResponseKeys
 from repohostutils import HttpResponseCode
 from repohostutils import ParameterValidation
@@ -32,7 +31,7 @@ _app = Flask(__name__)
 # files, ect...). Therefore, only Oso facts are created and
 # and Oso Cloud authorization requests are NOT made within this
 # API route.
-@_app.route(ApiRoutes.CREATE_REPO, methods=['POST'])
+@_app.route("/create-repo", methods=['POST'])
 def create_repo():
     username = request.json.get(ApiParameterKeys.USERNAME)
     repo_name = request.json.get(ApiParameterKeys.REPO_NAME)
@@ -63,7 +62,7 @@ def create_repo():
 
     return make_response(response_json, HttpResponseCode.SUCCESSFUL_RESPONSE_200_OK)
 
-@_app.route(ApiRoutes.CREATE_DIRECTORY, methods=['POST'])
+@_app.route("/create-directory", methods=['POST'])
 def create_directory():
     username = request.json.get(ApiParameterKeys.USERNAME)
     repo_name = request.json.get(ApiParameterKeys.REPO_NAME)
@@ -95,7 +94,7 @@ def create_directory():
 
     return make_response(response_json, HttpResponseCode.SUCCESSFUL_RESPONSE_200_OK)
 
-@_app.route(ApiRoutes.LIST_DIRECTORIES, methods=['GET'])
+@_app.route("/list-directories", methods=['GET'])
 def list_directories():
     username = request.json.get(ApiParameterKeys.USERNAME)
     repo_name = request.json.get(ApiParameterKeys.REPO_NAME)
@@ -114,14 +113,14 @@ def list_directories():
         # Check Oso Cloud to ensure the specified User has permission to
         # list directories from the specified Repository object.
         if _oso_client.authorize(User(username),
-                                 RepositoryPermissions.LIST_DIRECTORY,
+                                 RepositoryPermissions.LIST_DIRECTORIES,
                                  Repository(repo_name)):
             subdirectories = repohostutils.list_directories(
                 username,
                 repo_name,
                 directory_path
             )
-            # Return the list of subdirectories in the server response to the client.
+            # Generate the list of subdirectories to provide in the server response to the client.
             subdirectories_map = {
                 ApiResponseKeys.SUBDIRECTORIES: subdirectories
             }
@@ -134,7 +133,7 @@ def list_directories():
 
     return make_response(response_json, HttpResponseCode.SUCCESSFUL_RESPONSE_200_OK)
 
-@_app.route(ApiRoutes.DOWNLOAD_FILE, methods=['GET'])
+@_app.route("/download-file", methods=['GET'])
 def download_file():
     username = request.json.get(ApiParameterKeys.USERNAME)
     repo_name = request.json.get(ApiParameterKeys.REPO_NAME)
@@ -182,7 +181,7 @@ def download_file():
                 download_name=download_file_name
     )
 
-@_app.route(ApiRoutes.UPLOAD_FILE, methods=['PUT'])
+@_app.route("/upload-file", methods=['PUT'])
 def upload_file():
     username = request.args.get(ApiParameterKeys.USERNAME)
     repo_name = request.args.get(ApiParameterKeys.REPO_NAME)
@@ -231,13 +230,14 @@ def upload_file():
 # Configure the Oso Client
 ###############################################################################
 try:
-#   1. Retrieve the api-key from the host machine. The environment
-#      variable where the Oso API key is stored is "OSO_AUTH".
-    host_api_key = os.environ["OSO_AUTH"]
+#   1. Retrieve the api-key from the host machine to authenticate API usage
+#      with Oso Cloud. The environment variable where the Oso API key is
+#      stored is "OSO_AUTH".
+    host_api_key = os.environ.get("OSO_AUTH")
     _oso_client = oso_cloud.Oso(
         url="https://cloud.osohq.com",
         api_key=host_api_key)
-#   2. Load the Polar authorization policy.
+#   2. Load the Polar authorization policy into Oso Cloud.
     policy_file_name = "policy.polar"
     with open(policy_file_name) as policy_file:
         policy_string = policy_file.read()

@@ -14,7 +14,7 @@ resource Repository {
     # Define all available roles an actor can have on a Repository object.
     roles = ["owner", "admin", "guest"];
 
-    # Define all permission/role assignments.
+     # Define all permission/role assignments.
     "list_directory" if "guest";
     "download_file" if "guest";
 
@@ -23,6 +23,7 @@ resource Repository {
     "download_file" if "admin";
     "upload_file" if "admin";
 
+    # An "owner" has ALL "admin" roles.
     "admin" if "owner";
 }
 

@@ -9,7 +9,6 @@ import unittest
 sys.path.append(os.getcwd())
 import repohostutils
 
-from repohostutils import ApiRoutes
 from repohostutils import ApiParameterKeys
 from repohostutils import HttpResponseCode
 
@@ -20,7 +19,7 @@ class _HelperFunctions:
     @staticmethod
     def create_repo(username, repo_name):
         # Create the API Request URL
-        api_request_url = repohostutils.localhost_api_endpoint(ApiRoutes.CREATE_REPO)
+        api_request_url = repohostutils.localhost_api_endpoint("/create-repo")
 
         # Form the HTTP request.
         http_headers = {
@@ -39,7 +38,7 @@ class _HelperFunctions:
 
     def create_directory(username, repo_name, directory_path):
         # Create the API Request URL
-        api_request_url = repohostutils.localhost_api_endpoint(ApiRoutes.CREATE_DIRECTORY)
+        api_request_url = repohostutils.localhost_api_endpoint("/create-directory")
 
         # Form the HTTP request.
         http_headers = {
@@ -123,7 +122,7 @@ class RepoAccessFunctionalTests(unittest.TestCase):
             )
 
         # Create the API Request URL
-        api_request_url = repohostutils.localhost_api_endpoint(ApiRoutes.LIST_DIRECTORIES)
+        api_request_url = repohostutils.localhost_api_endpoint("/list-directories")
 
         # Form the HTTP request.
         http_headers = {
@@ -182,7 +181,7 @@ class RepoAccessFunctionalTests(unittest.TestCase):
             f.write(os.urandom(file_size_in_bytes))
 
         # Create the API Request URL
-        api_request_url = repohostutils.localhost_api_endpoint(ApiRoutes.UPLOAD_FILE)
+        api_request_url = repohostutils.localhost_api_endpoint("/upload-file")
 
         # Form the HTTP request.
         http_headers = {
@@ -236,7 +235,7 @@ class RepoAccessFunctionalTests(unittest.TestCase):
         )
 
         # Create the API Request URL
-        api_request_url = repohostutils.localhost_api_endpoint(ApiRoutes.DOWNLOAD_FILE)
+        api_request_url = repohostutils.localhost_api_endpoint("/download-file")
 
         # Form the HTTP request.
         http_headers = {

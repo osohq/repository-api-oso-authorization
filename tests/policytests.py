@@ -32,7 +32,7 @@ class AccessPolicyFunctionalTests(unittest.TestCase):
         # Expected TRUE authorizations for "owner" permissions.
         self.assertTrue(_oso_client.authorize(
             test_user,
-            policydefinitions.RepositoryPermissions.LIST_DIRECTORY,
+            policydefinitions.RepositoryPermissions.LIST_DIRECTORIES,
             test_user_repo))
 
         self.assertTrue(_oso_client.authorize(
@@ -66,7 +66,7 @@ class AccessPolicyFunctionalTests(unittest.TestCase):
         # Expected TRUE authorizations for "guest" permissions.
         self.assertTrue(_oso_client.authorize(
             test_user,
-            policydefinitions.RepositoryPermissions.LIST_DIRECTORY,
+            policydefinitions.RepositoryPermissions.LIST_DIRECTORIES,
             test_user_repo))
 
         self.assertTrue(_oso_client.authorize(
@@ -89,16 +89,14 @@ class AccessPolicyFunctionalTests(unittest.TestCase):
 
 if __name__ == "__main__":
     try:
-        ###############################################################################
-        # Configure the Oso Client
-        ###############################################################################
-        #   1. Retrieve the api-key from the host machine. The environment
-        #      variable where the Oso API key is stored is "OSO_AUTH".
-        host_api_key = os.environ["OSO_AUTH"]
+        #   1. Retrieve the api-key from the host machine to authenticate API usage
+        #      with Oso Cloud. The environment variable where the Oso API key is
+        #      stored is "OSO_AUTH".
+        host_api_key = os.environ.get("OSO_AUTH")
         _oso_client = oso_cloud.Oso(
             url="https://cloud.osohq.com",
             api_key=host_api_key)
-        #   2. Load the Polar authorization policy.
+        #   2. Load the Polar authorization policy into Oso Cloud.
         policy_file_name = "policy.polar"
         with open(policy_file_name) as policy_file:
             policy_string = policy_file.read()
