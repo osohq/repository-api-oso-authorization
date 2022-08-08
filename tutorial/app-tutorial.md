@@ -3,8 +3,8 @@
 - Obtain an Oso Cloud API key ([Oso Cloud Docs: *Quickstart*](https://cloud-docs.osohq.com/get-started/quickstart))
 - Install the `oso-cloud` python package ([Oso Cloud Docs: *Python API*](https://cloud-docs.osohq.com/reference/client-apis/python))
 
-
 <br>
+
 This application tutorial will guide you through how Oso Cloud can be used within backend REST APIs. We will first develop an authorization policy that models the actions users can perform with the APIs. Once the policy is complete, an `Oso` client will be used to enforce the authorization policies within the application itself.
 
 REST APIs exist for different types of applications and services. Here, we model a set of REST APIs for gaining access to a file repository. You can imagine a simple file store that allows a client to:
@@ -14,7 +14,7 @@ REST APIs exist for different types of applications and services. Here, we model
 - upload files to the repository and its directories, and
 - download files from the repository and its directories.
 
-However, access to these features should only be available to users who have been granted permission to do so, like the owner of the repository for example. This is where Oso Cloud steps in! Follow along with this tutorial and application code to see how it's done.
+Access to these features should only be available to users who have been granted permission to do so, like the owner of the repository for example. This is where Oso Cloud steps in! Follow along with this tutorial and application code to see how it's done.
 
 ## Authorization Modeling with Oso Cloud
 When building applications with authorization there are 3 steps that I like to follow first:
@@ -23,13 +23,13 @@ When building applications with authorization there are 3 steps that I like to f
 1. define the permissions that each role has.
 
 ### Defining the Access Model
-The first step is geared towards understanding what parts of the application will be providing *data* needed to construct authorization decisions. In Oso Cloud, these data are known as your *facts*. To help generate facts, this application uses a Role Based Access Control (RBAC) model. With a RBAC model, information about what role a user has is needed for checking and populating authorization databases.
+The first step is to understand what parts of the application will be providing *data* needed to construct authorization decisions. In Oso Cloud, these data are known as your *facts*. To help generate facts, this application uses a Role Based Access Control (RBAC) model. With a RBAC model, information about what role a user has is needed for checking and populating authorization databases.
 
-> **_NOTE_**: Other types of models could also be considered, for example, a Relationship-Based Access Control (ReBAC) model. A ReBAC model will not care about a user's role, but rather, a user-to-user connection or perhaps a user-to-resource. How data is extracted from the application, or other sources of truth (such as databases), is important and it will influence the abstractions you make in the next step.
+> **_NOTE_**: Other types of models could also be considered, for example, a Relationship-Based Access Control (ReBAC) model. A ReBAC model will not care about a user's role, but rather, a user-to-user connection or perhaps a user-to-resource. How data from the application, or other sources of truth (such as databases), is used to establish access control facts is important and it will influence the abstractions you make in the next step. You can learn more about access control models on [Oso Authorization Academy](https://www.osohq.com/academy).
 
 ### Enumerating Elements of Our Model
 Since we have identified RBAC as our best fitting access control model, we can start thinking about:
-- **WHO** will the interacting with our system (our `actors`)
+- **WHO** will be interacting with our system (our `actors`)
 - **WHAT** objects users can interact with (our `resources`)
 - the **ACTIONS** that users can perform (our `permissions`)
 - and the **GROUPS OF ACTIONS** that comprise the `roles` users can have within the system.
@@ -37,7 +37,7 @@ Since we have identified RBAC as our best fitting access control model, we can s
 > **_NOTE_**: Our simple application makes this stage seem trivial, however, in more complicated systems, this enumeration step is important in accurately modeling your environment. So it's ok to spend a little time here to get it right!
 
 #### Actor and Resource Enumeration
-Let's tackle this list in the order listed above. In our application *user* is a good description of **WHO** will be accessing our system. We expect a user `jane@<my_org>.net` to use our system to manage a repo. In the Polar policy we then use the `actor` block to define a *type* `User`:
+Let's tackle this in the order listed above. In our application *user* is a good description of **WHO** will be accessing our system. We expect a user `jane@<my_org>.net` to use our system to manage a repo. In the Polar policy we then use the `actor` block to define a *type* `User`:
 ```Polar
 # Define all actor types.
 actor User { }
@@ -57,7 +57,7 @@ We have now enumerated all of the object types that are used to model our applic
 #### Role and Permission Enumeration
 Roles and permissions apply to defined resources. In our case we have defined one `resource` type: `Repository`. Enumerating the roles and permissions for what specific users can do within a repository is key to the application design, how it operates as a service to clients, and how Oso Cloud will help enforce the desired authorization behavior.
 
-In the previous section we defined an empty `resource` type: `Repository`. Now we will populate it with the permissions that represent what a `User` can do with our repository.
+In the previous section we defined a `resource` type: `Repository`, but we did not provide any statements within its body. Now we will populate it with the permissions that represent what a `User` can do with our repository.
 ```Polar
 resource Repository {
     # Define all permission types that are allowed on Repository objects.
@@ -80,7 +80,7 @@ As advertised in the beginning of the tutorial, our API will allow users to perf
 | `upload_file` | A user with this permission will be able to upload files onto the repository. |
 
 
-It would be sufficient to simply have a list of permitted actions, however, in many cases, that does not fully model the way authorization is granted in real world applications. That's why in addition to the permissions, we have also defined a set of roles. In the *Repository Roles* table, we see how permissions are now grouped. So rather than assigning individual permissions to a user, we can now define a set of actions associated with a role, and grant that role to *users* of *repositories*!
+The list of permitted actions is a great starting point, however, it forces the application to individually assign actions to each user. This way of assigning permissions doesn't provide the best model for how we would like to grant authorization. That's why in addition to the permissions, we have also defined a set of roles. In the *Repository Roles* table, we see how the permissions are grouped. So rather than assigning individual permissions to a user, we can now define a set of actions associated with a role, and grant that *role* to *users* of *repositories*!
 
 | Repository Role | Associated Repository Permissions |
 |-----------------|-----------------------------------|
@@ -88,7 +88,7 @@ It would be sufficient to simply have a list of permitted actions, however, in m
 | `admin` | [`list_directories`, `download_file`, `create_directory`, `upload_file`] |
 | `owner` | [`list_directories`, `download_file`, `create_directory`, `upload_file`] |
 
-The Polar syntax to implement the associations referenced in the *Repository Roles* table. We simply add this code below the `permissions` definition.
+The Polar syntax to implement the associations is referenced in the *Repository Roles* table. We simply add this code below the `permissions` definition.
 
 ```Ruby
 resource Repository {
@@ -112,7 +112,7 @@ resource Repository {
 ```
 > **_NOTE_**: We can inherit permissions from other roles by creating a conditional rule using the `if` keyword. In the above policy, ALL `admin` permissions are granted to a user `if` they are an `owner`.  This avoids having to duplicate rules while still allowing use to fully model our environment.
 
-Within the project folder you'll find the complete logic describing the authorization policy in `./policy.polar`. The policy represents the complete view of the model that we discussed in this section.
+Within the project folder you'll find the complete logic describing the authorization policy in `./policy.polar`. The policy represents the complete view of the model discussed in this section.
 
 
 ## Application Development
@@ -126,6 +126,7 @@ We have already discussed creating the authorization rules in the previous secti
 The first step in our development process is configuring the `Oso` client. This is true for both our tests and application.
 
 The `oso-cloud` package provides an interface for connecting to Oso Cloud. In order to make use of those interfaces, there are two thing you will need to do:
+1. store your API key in an environment variable named `OSO_AUTH`,
 1. connect to Oso Cloud using your API key, and
 1. load your authorization policy into Oso Cloud.
 
@@ -158,19 +159,19 @@ except Exception as e:
 ```
 > **_NOTE_**: The API key stored in `OSO_AUTH` is retrieved dynamically rather than hardcoded into the application. In this example we use the `os.environ` object to get our API key. We highly recommend using *this* or a similar method to load API keys. This improves application security and greatly reduces the risk of exposing sensitive information to unintended audiences.
 
-We begin with a call to `oso_cloud.Oso` and provide the required URL for connecting to Oso Cloud and validating the API key. The function returns an `Oso` class object
+We begin with a call to `oso_cloud.Oso` and provide the URL for connecting to Oso Cloud and validating the API key. The function returns an `Oso` class object
 that is captured in `_oso_client`. Our first use of `_oso_client` is to upload our existing authorization policy into Oso Cloud. This will allow us to begin using Oso Cloud to evaluate information against our policy as soon as our application starts running.
 
-These calls are run each time our application is launched to ensure that the most up-to-date policy is always available in Oso Cloud. Without an uploaded policy file populating facts and authorization decisions will fail. If a policy file should be come out of date and no longer model your application correctly, you may also result in errors or other types of unexpected behavior.
+These calls are run each time our application is launched to ensure that the most up-to-date policy is always available in Oso Cloud. Without an uploaded policy, populating facts and authorization decisions will fail. If a policy should become out of date and no longer model your application correctly, you may also result in errors or other types of unexpected behavior.
 
 Take a look at `apis.py` to see how this code block is used within an application.
 
-### Updating Authorization Facts Data
+### Updating Authorization Data
 Finally, we are ready to inspect our first use of the `Oso` client within our app: *telling Oso Cloud what data it must use when evaluating authorization requests.*
 
-This application demonstrates a scenario in which authorization data (*Oso facts*) are populated into Oso Cloud at the time of creation. An alternative scenario would be populating *facts* from a database or some other static entity. In either case, the way we use the `Oso` client is the same.
+This application demonstrates a scenario in which authorization data (*facts*) are populated into Oso Cloud at the time of creation. An alternative scenario would be populating *facts* from a database or some other static entity. In either case, the way we use the `Oso` client is the same.
 
-In the API request, `/create-repo`, a user is able to create a new repository by providing a username and the name of the repository they wish to create. Because we are implementing a RBAC authorization model, we want to create a *fact* that uniquely captures the user, repository, and role the user has been given on that repository. To do so we write a rule with the predicate `has_role` and provide the parameters needed to establish the `fact`. An example from the application is given here:
+In the API request `/create-repo`, a user is able to create a new repository by providing a username and the name of the repository they wish to create. Because we are implementing a RBAC authorization model, we want to create a *fact* that uniquely captures the user, repository, and role the user has been given on that repository. To do so we write a rule with the predicate `has_role` and provide the parameters needed to establish the `fact`. An example from the application is given here:
 
 ```python
 @_app.route("/create-repo", methods=['POST'])
@@ -259,7 +260,7 @@ The tests in `./tests/policytests.py` are one way we can go about this. The file
 - use `authorize` to enforce authorization within our application.
 
 ### Oso Cloud Resources
-What we have not yet discussed is how you can use Oso Cloud to help visualize the data being created and test your policy within the browser.
+We have not yet discussed how you can use Oso Cloud to help visualize the data being created and test your policy within the browser.
 
 1. quickly test this workflow by running `./tests/policytests.py`.
     ```shell
@@ -275,15 +276,15 @@ What we have not yet discussed is how you can use Oso Cloud to help visualize th
     ```
     ![Oso Cloud Explain Page](images/explain-ui.png)
 
-In step 3 we can already start testing our authorization queries without writing further code. This can be used to quickly determine if authorizations are working as intended.
+In step 3 we can already start testing our authorization queries without writing further code. This can be used to quickly determine if authorization is working as intended.
 
-Making use of the [Explain Page](https://cloud.osohq.com/explain) may not seem as powerful with only two facts populated as in this example. However, if our repository application were populated with thousands of users, determining what roles or permissions allowed a user to violate a particular authorization policy will become more difficult. What's also nice about testing the query in this fashion is that it:
-- references specific facts that allow an authorization to "Pass" or "Fail, and
+The [Explain Page](https://cloud.osohq.com/explain) is particularly useful when our application is populated with thousands of users. It helps us determine what roles or permissions allowed a user to violate a particular authorization policy. What's also nice about testing the query in this fashion is that it:
+- shows you specific facts that allow an authorization to "Pass" or "Fail, and
 - it brings up the policy side-by-side so you can compare what was modeled with the actual result.
 
 ## Summary
-Using Oso Cloud to build authorization into applications requires **six** key steps:
-1. Login to Oso Cloud and obtain a valid API Key. Reference the [Oso Cloud Docs: *Quickstart*](https://cloud-docs.osohq.com/get-started/quickstart) guide for help if needed.
+Using Oso Cloud to build authorization into applications can be done in **six** key steps:
+1. Log in to Oso Cloud and obtain a valid API Key. Reference the [Oso Cloud Docs: *Quickstart*](https://cloud-docs.osohq.com/get-started/quickstart) guide for help if needed.
 1. Install the `Oso` client package. For this tutorial we are using the python package. Instructions for installing the package is available on [Oso Cloud Docs: *Python API*](https://cloud-docs.osohq.com/reference/client-apis/python) page.
 1. Model your authorization logic within your Oso policy file. Capture all **Actors**, **Resources**, **Actions**, and **Roles** that describe how your application works.
 1. Configure the `Oso` client within your application. Make sure that it is placed in a section of your application that will be called during every launch or refresh of your application.
