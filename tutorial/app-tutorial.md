@@ -186,12 +186,20 @@ def create_repo():
     try:
         # Create an Oso fact for the actor:User/resource:Repository pair,
         # granting the role of "owner", to the User for the specified Repository.
+        user_object_dict = {
+            "type": "User",
+            "id": username
+        }
+        repo_object_dict = {
+            "type": "Repository",
+            "id": repo_name
+        }
         defined_role = RepositoryRoles.OWNER
         _oso_client.tell(
             "has_role",
-            User(username),
+            user_object_dict,
             RepositoryRoles.OWNER,
-            Repository(repo_name))
+            repo_object_dict)
         # Create a new directory for the specified username/rep_name pair.
         ...
     except Exception as e:
@@ -221,9 +229,17 @@ def list_directories():
     try:
         # Check Oso Cloud to ensure the specified User has permission to
         # list directories from the specified Repository object.
-        if _oso_client.authorize(User(username),
+        user_object_dict = {
+            "type": "User",
+            "id": username
+        }
+        repo_object_dict = {
+            "type": "Repository",
+            "id": repo_name
+        }
+        if _oso_client.authorize(user_object_dict,
                                  RepositoryPermissions.LIST_DIRECTORIES,
-                                 Repository(repo_name)):
+                                 repo_object_dict):
             # Generate the list of subdirectories to provide in the server response to the client.
             ...
         else:
