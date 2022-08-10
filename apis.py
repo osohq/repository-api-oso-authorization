@@ -11,7 +11,7 @@ from flask import send_file
 
 import repohostutils
 
-from policydefinitions import RepositoryPermissions, RepositoryRoles, User, Repository
+from policydefinitions import RepositoryPermissions, RepositoryRoles
 from repohostutils import ApiParameterKeys, ApiResponseKeys
 from repohostutils import HttpResponseCode
 from repohostutils import ParameterValidation
@@ -46,11 +46,19 @@ def create_repo():
         # Create an Oso fact for the actor:User/resource:Repository pair,
         # granting the role of "owner", to the User for the specified Repository.
         defined_role = RepositoryRoles.OWNER
+        user_object_dict = {
+            "type": "User",
+            "id": username
+        }
+        repo_object_dict = {
+            "type": "Repository",
+            "id": repo_name
+        }
         _oso_client.tell(
             "has_role",
-            User(username),
+            user_object_dict,
             RepositoryRoles.OWNER,
-            Repository(repo_name))
+            repo_object_dict)
         # Create a new directory for the specified username/rep_name pair.
         relative_path = repohostutils.create_user_repo(username, repo_name)
         # Get the relative path of the repo as a JSON
@@ -78,9 +86,17 @@ def create_directory():
     try:
         # Check Oso Cloud to ensure the specified User has permission to
         # create directories on the specified Repository object.
-        if _oso_client.authorize(User(username),
+        user_object_dict = {
+            "type": "User",
+            "id": username
+        }
+        repo_object_dict = {
+            "type": "Repository",
+            "id": repo_name
+        }
+        if _oso_client.authorize(user_object_dict,
                                  RepositoryPermissions.CREATE_DIRECTORY,
-                                 Repository(repo_name)):
+                                 repo_object_dict):
             relative_path = repohostutils.create_user_repo_directory(
                 username,
                 repo_name,
@@ -112,9 +128,17 @@ def list_directories():
     try:
         # Check Oso Cloud to ensure the specified User has permission to
         # list directories from the specified Repository object.
-        if _oso_client.authorize(User(username),
+        user_object_dict = {
+            "type": "User",
+            "id": username
+        }
+        repo_object_dict = {
+            "type": "Repository",
+            "id": repo_name
+        }
+        if _oso_client.authorize(user_object_dict,
                                  RepositoryPermissions.LIST_DIRECTORIES,
-                                 Repository(repo_name)):
+                                 repo_object_dict):
             subdirectories = repohostutils.list_directories(
                 username,
                 repo_name,
@@ -154,9 +178,17 @@ def download_file():
     try:
         # Check Oso Cloud to ensure the specified User has permission to
         # download files from the specified Repository object.
-        if _oso_client.authorize(User(username),
+        user_object_dict = {
+            "type": "User",
+            "id": username
+        }
+        repo_object_dict = {
+            "type": "Repository",
+            "id": repo_name
+        }
+        if _oso_client.authorize(user_object_dict,
                                  RepositoryPermissions.DOWNLOAD_FILE,
-                                 Repository(repo_name)):
+                                 repo_object_dict):
             file_mimetype = repohostutils.get_file_mimetype(
                 username,
                 repo_name,
@@ -205,9 +237,17 @@ def upload_file():
     try:
         # Check Oso Cloud to ensure the specified User has permission to
         # upload files to the specified Repository object.
-        if _oso_client.authorize(User(username),
+        user_object_dict = {
+            "type": "User",
+            "id": username
+        }
+        repo_object_dict = {
+            "type": "Repository",
+            "id": repo_name
+        }
+        if _oso_client.authorize(user_object_dict,
                                  RepositoryPermissions.UPLOAD_FILE,
-                                 Repository(repo_name)):
+                                 repo_object_dict):
             relative_path = repohostutils.write_file(
                 username,
                 repo_name,

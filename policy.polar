@@ -5,7 +5,7 @@ actor User { }
 resource Repository {
     # Define all permission types that are allowed on Repository objects.
     permissions = [
-        "list_directory",
+        "list_directories",
         "create_directory",
         "download_file",
         "upload_file"
@@ -15,10 +15,10 @@ resource Repository {
     roles = ["owner", "admin", "guest"];
 
      # Define all permission/role assignments.
-    "list_directory" if "guest";
+    "list_directories" if "guest";
     "download_file" if "guest";
 
-    "list_directory" if "admin";
+    "list_directories" if "admin";
     "create_directory" if "admin";
     "download_file" if "admin";
     "upload_file" if "admin";

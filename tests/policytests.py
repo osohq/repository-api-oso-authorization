@@ -8,8 +8,6 @@ import unittest
 sys.path.append(os.getcwd())
 import policydefinitions
 
-from policydefinitions import User, Repository
-
 _oso_client = None
 
 # Test the expected behavior of the Oso Policy specified in the project.
@@ -20,8 +18,15 @@ class AccessPolicyFunctionalTests(unittest.TestCase):
 
     def test_role_owner(self):
         # Create an actor and resource with an assigned role.
-        test_user = User("user@test-role-owner")
-        test_user_repo = Repository("test-role-owner")
+
+        test_user = {
+            "type": "User",
+            "id": "user@test-role-owner"
+        }
+        test_user_repo = {
+            "type": "Repository",
+            "id": "test-role-owner"
+        }
         assigned_role = policydefinitions.RepositoryRoles.OWNER
         _oso_client.tell(
             "has_role",
@@ -54,8 +59,14 @@ class AccessPolicyFunctionalTests(unittest.TestCase):
 
     def test_role_guest(self):
         # Create an actor and resource with an assigned role.
-        test_user = User("user@test-role-guest")
-        test_user_repo = Repository("test-role-guest")
+        test_user = {
+            "type": "User",
+            "id": "user@test-role-guest"
+        }
+        test_user_repo = {
+            "type": "Repository",
+            "id": "test-role-guest"
+        }
         assigned_role = policydefinitions.RepositoryRoles.GUEST
         _oso_client.tell(
             "has_role",
