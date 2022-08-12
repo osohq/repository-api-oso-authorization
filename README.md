@@ -1,6 +1,8 @@
 # Getting Started
 This application is built using Flask and the `oso_cloud` Python client. It implements selected behaviors of a file repository system and exposes them through a REST API. The main goal of this application is to demonstrate how Oso Cloud can be used to model, manage, and enforce authorization.
 
+> __*NOTE*__: Running this application and its tests requires permission to modify the host machine's directories (i.e. create files/folder, list files/directories). Please ensure that the proper permissions and access are given to the application.
+
 You can use this [Getting Started](#getting-started) guide to learn how to start and test the applications services. We also provide a full description of *how* the application was built in the tutorial:
 [Oso Cloud Authorization within a Repository REST API](./tutorial/app-tutorial.md).
 
