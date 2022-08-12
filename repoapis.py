@@ -1,5 +1,8 @@
 #!/usr/bin/python3
 import json
+import os
+import oso_cloud
+import sys
 
 from flask import Flask
 from flask import jsonify
@@ -7,26 +10,24 @@ from flask import make_response
 from flask import request
 from flask import send_file
 
-# Modules defined within this project.
-import commonutils
-import osoclient
+# Add the current directory to the system path
+application_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(application_dir)
+
 import repohostutils
 
-from policydefinitions import PermissionTypes, RoleTypes, User, Repository
-from repohostutils import ApiRoutes
+from policydefinitions import RepositoryPermissions, RepositoryRoles
 from repohostutils import ApiParameterKeys, ApiResponseKeys
 from repohostutils import HttpResponseCode
 from repohostutils import ParameterValidation
 
+# Oso Cloud client object:
+#   We will configure our Oso Cloud environment
+#   at the bottom of the file before we run our
+#   API services.
+_oso_client = None
 
-_webapp = Flask(__name__)
-
-# Define paths to the Oso policies to use for authorization
-# in the application.
-DEFAULT_POLICIES_PATH = commonutils.policies_directory_path()
-DEFAULT_POLICY_NAME = "access-policy.polar"
-
-_oso_client_util = osoclient.OsoClientUtil()
+_app = Flask(__name__)
 
 # This API route is controlled by the application provider.
 # Users subscribed to this application have permission to create
@@ -35,53 +36,46 @@ _oso_client_util = osoclient.OsoClientUtil()
 # files, ect...). Therefore, only Oso facts are created and
 # and Oso Cloud authorization requests are NOT made within this
 # API route.
-@_webapp.route(ApiRoutes.CREATE_REPO, methods=['POST'])
+@_app.route("/create-repo", methods=['POST'])
 def create_repo():
     username = request.json.get(ApiParameterKeys.USERNAME)
     repo_name = request.json.get(ApiParameterKeys.REPO_NAME)
-    
+
     # Check that the required parameters have been provided in the HTTP request.
     if (not ParameterValidation.check_required_str(ApiParameterKeys.USERNAME, username) or
         not ParameterValidation.check_required_str(ApiParameterKeys.REPO_NAME, repo_name)):
         return make_response(None, HttpResponseCode.CLIENT_ERROR_RESPONSE_400_BAD_REQUEST)
 
-    # Retrieve the Oso client from the utility function.
-    oso_client = _oso_client_util.get_client()
-
-    # Create an Oso fact for the actor:User/resource:Repository pair,
-    # granting the role of "owner", to the User for the specified Repository.
-    defined_role = RoleTypes.OWNER
-    oso_client.tell(
-        "has_role",
-        User(username),
-        RoleTypes.OWNER,
-        Repository(repo_name))
-
-    # Verify that the new fact has been created in Oso Cloud for the
-    # (User, Role, Repository) set, that was specified in the Oso tell command.
-    oso_facts = oso_client.get(
+    response_json = None
+    try:
+        # Create an Oso fact for the actor:User/resource:Repository pair,
+        # granting the role of "owner", to the User for the specified Repository.
+        defined_role = RepositoryRoles.OWNER
+        user_object_dict = {
+            "type": "User",
+            "id": username
+        }
+        repo_object_dict = {
+            "type": "Repository",
+            "id": repo_name
+        }
+        _oso_client.tell(
             "has_role",
-            User(username),
-            defined_role,
-            Repository(repo_name))
-
-    # Verify that one and ONLY one Oso fact is returned.
-    # We omit checking the contents of the Oso fact in this example
-    # and rely on the existance of the fact as a sufficient criteria
-    # for creating a new repo on the server for the specified user.
-    if (isinstance(oso_facts, list) and len(oso_facts) == 1):
+            user_object_dict,
+            RepositoryRoles.OWNER,
+            repo_object_dict)
         # Create a new directory for the specified username/rep_name pair.
         relative_path = repohostutils.create_user_repo(username, repo_name)
         # Get the relative path of the repo as a JSON
         # for to the response back to the client.
-        repsonse_json = repohostutils.get_path_json(relative_path)
-        return make_response(repsonse_json, HttpResponseCode.SUCCESSFUL_RESPONSE_200_OK)
+        response_json = repohostutils.get_path_json(relative_path)
+    except Exception as e:
+        print(e)
+        return make_response(None, HttpResponseCode.SERVER_ERROR_RESPONSE_500_INTERNAL_SERVER_ERROR)
 
-    # If one and ONLY one fact is not able to be retrieved from Oso Cloud,
-    # then no resources are created on the server and return with an error.
-    return make_response(None, HttpResponseCode.SERVER_ERROR_RESPONSE_500_INTERNAL_SERVER_ERROR)
+    return make_response(response_json, HttpResponseCode.SUCCESSFUL_RESPONSE_200_OK)
 
-@_webapp.route(ApiRoutes.CREATE_DIRECTORY, methods=['POST'])
+@_app.route("/create-directory", methods=['POST'])
 def create_directory():
     username = request.json.get(ApiParameterKeys.USERNAME)
     repo_name = request.json.get(ApiParameterKeys.REPO_NAME)
@@ -93,30 +87,35 @@ def create_directory():
         not ParameterValidation.check_required_str(ApiParameterKeys.DIRECTORY_PATH, directory_path)):
         return make_response(None, HttpResponseCode.CLIENT_ERROR_RESPONSE_400_BAD_REQUEST)
 
-    # Retrieve the Oso client from the utility function.
-    oso_client = _oso_client_util.get_client()
-
-    # Verify that the user is authorized to put files on this repo.
+    response_json = None
     try:
         # Check Oso Cloud to ensure the specified User has permission to
         # create directories on the specified Repository object.
-        if oso_client.authorize(User(username),
-                                PermissionTypes.CREATE_DIRECTORY,
-                                Repository(repo_name)):
+        user_object_dict = {
+            "type": "User",
+            "id": username
+        }
+        repo_object_dict = {
+            "type": "Repository",
+            "id": repo_name
+        }
+        if _oso_client.authorize(user_object_dict,
+                                 RepositoryPermissions.CREATE_DIRECTORY,
+                                 repo_object_dict):
             relative_path = repohostutils.create_user_repo_directory(
                 username,
                 repo_name,
                 directory_path)
-            repsonse_json = repohostutils.get_path_json(relative_path)
-            return make_response(repsonse_json, HttpResponseCode.SUCCESSFUL_RESPONSE_200_OK)
+            response_json = repohostutils.get_path_json(relative_path)
         else:
-            return make_response(None, HttpResponseCode.CLIENT_ERROR_RESPONSE_401_UNATHORIZED)
+            return make_response(None, HttpResponseCode.CLIENT_ERROR_RESPONSE_401_UNAUTHORIZED)
     except Exception as e:
         print(e)
+        return make_response(None, HttpResponseCode.SERVER_ERROR_RESPONSE_500_INTERNAL_SERVER_ERROR)
 
-    return make_response(None, HttpResponseCode.SERVER_ERROR_RESPONSE_500_INTERNAL_SERVER_ERROR)
+    return make_response(response_json, HttpResponseCode.SUCCESSFUL_RESPONSE_200_OK)
 
-@_webapp.route(ApiRoutes.LIST_DIRECTORIES, methods=['GET'])
+@_app.route("/list-directories", methods=['GET'])
 def list_directories():
     username = request.json.get(ApiParameterKeys.USERNAME)
     repo_name = request.json.get(ApiParameterKeys.REPO_NAME)
@@ -130,31 +129,40 @@ def list_directories():
         not ParameterValidation.check_required_str(ApiParameterKeys.DIRECTORY_PATH, directory_path)):
         return make_response(None, HttpResponseCode.CLIENT_ERROR_RESPONSE_400_BAD_REQUEST)
 
-    oso_client = _oso_client_util.get_client()
+    response_json = None
     try:
         # Check Oso Cloud to ensure the specified User has permission to
         # list directories from the specified Repository object.
-        if oso_client.authorize(User(username),
-                                PermissionTypes.LIST_DIRECTORY,
-                                Repository(repo_name)):
+        user_object_dict = {
+            "type": "User",
+            "id": username
+        }
+        repo_object_dict = {
+            "type": "Repository",
+            "id": repo_name
+        }
+        if _oso_client.authorize(user_object_dict,
+                                 RepositoryPermissions.LIST_DIRECTORIES,
+                                 repo_object_dict):
             subdirectories = repohostutils.list_directories(
                 username,
                 repo_name,
                 directory_path
             )
-            # Return the list of subdirectories in the server response to the client.
+            # Generate the list of subdirectories to provide in the server response to the client.
             subdirectories_map = {
                 ApiResponseKeys.SUBDIRECTORIES: subdirectories
             }
-            return make_response(jsonify(subdirectories_map), HttpResponseCode.SUCCESSFUL_RESPONSE_200_OK)
+            response_json = jsonify(subdirectories_map)
         else:
-            return make_response(None, HttpResponseCode.CLIENT_ERROR_RESPONSE_401_UNATHORIZED)
+            return make_response(None, HttpResponseCode.CLIENT_ERROR_RESPONSE_401_UNAUTHORIZED)
     except Exception as e:
         print(e)
+        return make_response(None, HttpResponseCode.SERVER_ERROR_RESPONSE_500_INTERNAL_SERVER_ERROR)
 
-    return make_response(None, HttpResponseCode.SERVER_ERROR_RESPONSE_500_INTERNAL_SERVER_ERROR)
+    return make_response(response_json, HttpResponseCode.SUCCESSFUL_RESPONSE_200_OK)
 
-@_webapp.route(ApiRoutes.DOWNLOAD_FILE, methods=['GET'])
+@_app.route("/download-file", methods=['GET'])
 def download_file():
     username = request.json.get(ApiParameterKeys.USERNAME)
     repo_name = request.json.get(ApiParameterKeys.REPO_NAME)
@@ -168,14 +176,24 @@ def download_file():
         not ParameterValidation.check_required_str(ApiParameterKeys.REPO_NAME, repo_name) or
         not ParameterValidation.check_required_str(ApiParameterKeys.FILE_PATH, file_path)):
         return make_response(None, HttpResponseCode.CLIENT_ERROR_RESPONSE_400_BAD_REQUEST)
-    
-    oso_client = _oso_client_util.get_client()
+
+
+    file_object = None
+    file_object = None
     try:
         # Check Oso Cloud to ensure the specified User has permission to
         # download files from the specified Repository object.
-        if oso_client.authorize(User(username),
-                                PermissionTypes.DOWNLOAD_FILE,
-                                Repository(repo_name)):
+        user_object_dict = {
+            "type": "User",
+            "id": username
+        }
+        repo_object_dict = {
+            "type": "Repository",
+            "id": repo_name
+        }
+        if _oso_client.authorize(user_object_dict,
+                                 RepositoryPermissions.DOWNLOAD_FILE,
+                                 repo_object_dict):
             file_mimetype = repohostutils.get_file_mimetype(
                 username,
                 repo_name,
@@ -186,20 +204,21 @@ def download_file():
                 repo_name,
                 file_path
             )
-            return send_file(
+        else:
+            return make_response(None, HttpResponseCode.CLIENT_ERROR_RESPONSE_401_UNAUTHORIZED)
+    except Exception as e:
+        print(e)
+        return make_response(None, HttpResponseCode.SERVER_ERROR_RESPONSE_500_INTERNAL_SERVER_ERROR)
+
+
+    return send_file(
                 file_object,
                 mimetype=file_mimetype,
                 as_attachment=True,
                 download_name=download_file_name
-            )
-        else:
-            return make_response(None, HttpResponseCode.CLIENT_ERROR_RESPONSE_401_UNATHORIZED)
-    except Exception as e:
-        print(e)
+    )
 
-    return make_response(None, HttpResponseCode.SERVER_ERROR_RESPONSE_500_INTERNAL_SERVER_ERROR)
-
-@_webapp.route(ApiRoutes.UPLOAD_FILE, methods=['PUT'])
+@_app.route("/upload-file", methods=['PUT'])
 def upload_file():
     username = request.args.get(ApiParameterKeys.USERNAME)
     repo_name = request.args.get(ApiParameterKeys.REPO_NAME)
@@ -219,13 +238,21 @@ def upload_file():
         not ParameterValidation.check_required_str(ApiParameterKeys.DIRECTORY_PATH, directory_path)):
         return make_response(None, HttpResponseCode.CLIENT_ERROR_RESPONSE_400_BAD_REQUEST)
 
-    oso_client = _oso_client_util.get_client()
+    json_response = None
     try:
         # Check Oso Cloud to ensure the specified User has permission to
         # upload files to the specified Repository object.
-        if oso_client.authorize(User(username),
-                                PermissionTypes.UPLOAD_FILE,
-                                Repository(repo_name)):
+        user_object_dict = {
+            "type": "User",
+            "id": username
+        }
+        repo_object_dict = {
+            "type": "Repository",
+            "id": repo_name
+        }
+        if _oso_client.authorize(user_object_dict,
+                                 RepositoryPermissions.UPLOAD_FILE,
+                                 repo_object_dict):
             relative_path = repohostutils.write_file(
                 username,
                 repo_name,
@@ -235,27 +262,44 @@ def upload_file():
                 write_mode=write_mode
             )
             json_response = repohostutils.get_path_json(relative_path)
-            return make_response(json_response, HttpResponseCode.SUCCESSFUL_RESPONSE_201_CREATED)
         else:
-            return make_response(None, HttpResponseCode.CLIENT_ERROR_RESPONSE_401_UNATHORIZED)
+            return make_response(None, HttpResponseCode.CLIENT_ERROR_RESPONSE_401_UNAUTHORIZED)
     except Exception as e:
         print(e)
-    return make_response(None, HttpResponseCode.SERVER_ERROR_RESPONSE_500_INTERNAL_SERVER_ERROR)
+        return make_response(None, HttpResponseCode.SERVER_ERROR_RESPONSE_500_INTERNAL_SERVER_ERROR)
+
+    return make_response(json_response, HttpResponseCode.SUCCESSFUL_RESPONSE_201_CREATED)
 
 
-# Load the current policy for testing.
-OSO_POLICIES_PATH = commonutils.policies_directory_path()
-OSO_POLICY_NAME = "access-policy.polar"
-if isinstance(_oso_client_util, osoclient.OsoClientUtil):
-    policy_file_name = "{}/{}".format(
-        OSO_POLICIES_PATH,
-        OSO_POLICY_NAME
-    )
-    api_result = _oso_client_util.load_policy(policy_file_name)
+###############################################################################
+# Configure the Oso Client
+###############################################################################
+try:
+#   1. Retrieve the api-key from the host machine to authenticate API usage
+#      with Oso Cloud. The environment variable where the Oso API key is
+#      stored is "OSO_AUTH".
+    host_api_key = os.environ.get("OSO_AUTH")
+    _oso_client = oso_cloud.Oso(
+        url="https://cloud.osohq.com",
+        api_key=host_api_key)
+#   2. Load the Polar authorization policy into Oso Cloud.
+    policy_file_name = "policy.polar"
+    with open(policy_file_name) as policy_file:
+        policy_string = policy_file.read()
+        _oso_client.policy(policy=policy_string)
+except Exception as e:
+        print(e)
 
+###############################################################################
+# Configure the host
+###############################################################################
 repohostutils.repo_host_init()
 
-_webapp.run(
-    host=repohostutils.DEFAULT_HTTP_HOST_NAME,
-    port=repohostutils.DEFAULT_HTTP_PORT_NUMBER
-)
+###############################################################################
+# Run the API application
+###############################################################################
+if __name__ == "__main__":
+    _app.run(
+        host=repohostutils.DEFAULT_HTTP_HOST_NAME,
+        port=repohostutils.DEFAULT_HTTP_PORT_NUMBER
+    )
