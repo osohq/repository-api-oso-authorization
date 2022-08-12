@@ -26,7 +26,7 @@ flask run
 
 After executing the commands, some information will be displayed in your terminal window about the session that is running.
 ```bash
-* Serving Flask app 'repoapis' (lazy loading)
+ * Serving Flask app 'repoapis' (lazy loading)
  * Environment: development
  * Debug mode: on
  * Running on http://127.0.0.1:5000 (Press CTRL+C to quit)
