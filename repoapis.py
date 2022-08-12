@@ -2,12 +2,17 @@
 import json
 import os
 import oso_cloud
+import sys
 
 from flask import Flask
 from flask import jsonify
 from flask import make_response
 from flask import request
 from flask import send_file
+
+# Add the current directory to the system path
+application_dir = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(application_dir)
 
 import repohostutils
 
@@ -293,7 +298,8 @@ repohostutils.repo_host_init()
 ###############################################################################
 # Run the API application
 ###############################################################################
-_app.run(
-    host=repohostutils.DEFAULT_HTTP_HOST_NAME,
-    port=repohostutils.DEFAULT_HTTP_PORT_NUMBER
-)
+if __name__ == "__main__":
+    _app.run(
+        host=repohostutils.DEFAULT_HTTP_HOST_NAME,
+        port=repohostutils.DEFAULT_HTTP_PORT_NUMBER
+    )

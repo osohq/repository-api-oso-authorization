@@ -164,7 +164,7 @@ that is captured in `_oso_client`. Our first use of `_oso_client` is to upload o
 
 These calls are run each time our application is launched to ensure that the most up-to-date policy is always available in Oso Cloud. Without an uploaded policy, populating facts and authorization decisions will fail. If a policy should become out of date and no longer model your application correctly, you may also result in errors or other types of unexpected behavior.
 
-Take a look at `apis.py` to see how this code block is used within an application.
+Take a look at `repoapis.py` to see how this code block is used within an application.
 
 ### Updating Authorization Data
 Finally, we are ready to inspect our first use of the `Oso` client within our app: *telling Oso Cloud what data it must use when evaluating authorization requests.*
@@ -265,7 +265,7 @@ In addition to the repository API code, this tutorial also contains two test fil
 | Test file | Description |
 |-----------|-------------|
 | `./tests/policytests.py` | A set of functional tests that add role based facts to Oso Cloud and test authorization queries regarding user actions on a given repository. |
-| `./tests/apitests.py` | A set of functional tests that demonstrate client usage of the repository APIs contained in `./apis.py`. The API service must be running for the tests to complete successfully. |
+| `./tests/repoapitests.py` | A set of functional tests that demonstrate client usage of the repository APIs contained in `./repoapis.py`. The API service must be running for the tests to complete successfully. |
 
 ### Writing Test Code
 We can start testing our policy as soon as we have finished modeling it in our policy file: `policy.polar`. This is a great place to start, even before writing our application code, or integrating authorization into an existing application.

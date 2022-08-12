@@ -59,8 +59,12 @@ class _HelperFunctions:
 
 class RepoAccessFunctionalTests(unittest.TestCase):
     def setUp(self):
-        log_message = "Performing Test ::{}".format(self._testMethodName)
-        print("INFO: apitests", log_message)
+        log_message = "[INFO] Performing Test {}::{}".format(
+            os.path.basename(__file__),
+            self._testMethodName
+        )
+
+        print(log_message)
 
     def test_create_repo(self):
         username = "user@test-create-repo"
