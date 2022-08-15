@@ -3,8 +3,8 @@ This application is built using Flask and the `oso_cloud` Python client. It impl
 
 > __*NOTE*__: Running this application and its tests requires permission to modify the host machine's directories (i.e. create files/folder, list files/directories). Please ensure that the proper permissions and access are given to the application.
 
-You can use this [Getting Started](#getting-started) guide to learn how to start and test the applications services. We also provide a full description of *how* the application was built in the tutorial:
-[Oso Cloud Authorization within a Repository REST API](./tutorial/app-tutorial.md).
+You can use this [Getting Started](#getting-started) guide to learn how to start and test the application's services. There is also a full description of *how* the application was built in the tutorial:
+[Oso Cloud Authorization within a Repository REST API](https://cloud-docs.osohq.com/tutorials/authz-within-rest-apis).
 
 More information about Oso Cloud, its tools and other resources can be found by visiting: https://cloud-docs.osohq.com/.
 
