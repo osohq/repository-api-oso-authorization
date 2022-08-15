@@ -3,9 +3,6 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# C extensions
-*.so
-
 # Distribution / packaging
 .Python
 build/
@@ -102,6 +99,7 @@ celerybeat.pid
 *.sage.py
 
 # Environments
+.DS_Store
 .env
 .venv
 env/
@@ -129,5 +127,6 @@ dmypy.json
 .pyre/
 
 # Application files and directories
+*.swp
 .tmp/
 repo-host-root/
