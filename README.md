@@ -4,9 +4,9 @@ This application is built using Flask and the `oso_cloud` Python client. It impl
 > __*NOTE*__: Running this application and its tests requires permission to modify the host machine's directories (i.e. create files/folder, list files/directories). Please ensure that the proper permissions and access are given to the application.
 
 You can use this [Getting Started](#getting-started) guide to learn how to start and test the application's services. There is also a full description of *how* the application was built in the tutorial:
-[Oso Cloud Authorization within a Repository REST API](https://cloud-docs.osohq.com/tutorials/authz-within-rest-apis).
+[Writing My First Web App Using Oso Cloud](https://cloud-docs.osohq.com/tutorials/authz-within-rest-apis).
 
-More information about Oso Cloud, its tools and other resources can be found by visiting: https://cloud-docs.osohq.com/.
+More information about Oso Cloud, its tools and other resources can be found by visiting: https://osohq.com/docs.
 
 **Dependency Table**
 | Dependency | Version Tested | Description |
@@ -15,6 +15,43 @@ More information about Oso Cloud, its tools and other resources can be found by 
 | `oso-cloud` | 0.7.0 | Oso Cloud Python client used for managing authorization within the web application.
 | `Python` | 3.9.13 | Programming language used for the web application implementation. |
 | `requests` | 2.28.1 | HTTP library for testing communication with the web application's REST APIs. |
+
+## Prerequisites
+**Required**
+- Obtain an Oso Cloud API key ([Oso Cloud Docs: *Quickstart*](https://www.osohq.com/docs/get-started/quickstart))
+- Install the dependencies listed in `requirements.txt`.
+    ```shell
+    > pip install -r requirements.txt
+    ```
+**Optional**
+- Install the Oso Cloud CLI ([Oso Cloud Docs: *Quickstart*](https://www.osohq.com/docs/get-started/quickstart))
+
+
+## Configuring Your Environment
+Make sure that you are pointing to the Oso Cloud environment you intend to use for testing.
+You can follow the Oso Cloud [CI and Testing](https://www.osohq.com/docs/guides/more/ci-and-testing) documentation for setting up your Oso Cloud environment before use.
+
+The commands shown here:
+1. Clear existing policy and facts data from your Oso Cloud environment.
+1. Upload the local `policy.polar` policy file to Oso Cloud.
+
+### Configuration Using the CLI
+
+```shell
+export OSO_AUTH=<OSO_CLOUD_API_KEY>
+oso-cloud clear --confirm
+oso-cloud policy policy.polar
+```
+> **_NOTE_**: This will clear all existing policy and facts data.
+
+### Configuration Using the Python Client
+As an alternative, you can run the `osoenvconfig.py` script within this repo. It uses the Oso Cloud Python client to implement the same behavior as running the CLI commands above.
+
+```shell
+pyhton3 osoenvconfig.py
+```
+> **_NOTE_**: This will clear all existing policy and facts data.
+
 
 ## Running the Application
 Our web application is called `repoapis`. Start it by running the following commands in your terminal window.

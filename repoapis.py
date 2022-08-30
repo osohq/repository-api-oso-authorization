@@ -275,20 +275,13 @@ def upload_file():
 # Configure the Oso Client
 ###############################################################################
 try:
-#   1. Retrieve the api-key from the host machine to authenticate API usage
-#      with Oso Cloud. The environment variable where the Oso API key is
-#      stored is "OSO_AUTH".
+    # Authenticate the connection to Oso Cloud.
     host_api_key = os.environ.get("OSO_AUTH")
     _oso_client = oso_cloud.Oso(
         url="https://cloud.osohq.com",
         api_key=host_api_key)
-#   2. Load the Polar authorization policy into Oso Cloud.
-    policy_file_name = "policy.polar"
-    with open(policy_file_name) as policy_file:
-        policy_string = policy_file.read()
-        _oso_client.policy(policy=policy_string)
 except Exception as e:
-        print(e)
+    print(e)
 
 ###############################################################################
 # Configure the host
